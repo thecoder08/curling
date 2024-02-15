@@ -7,7 +7,7 @@ using ObjLoader.Loader.Data.VertexData;
 using ObjLoader.Loader.Data.Elements;
 
 NativeWindowSettings nativeWindowSettings = new NativeWindowSettings();
-nativeWindowSettings.ClientSize = new Vector2i(640, 640);
+nativeWindowSettings.ClientSize = new Vector2i(640, 480);
 nativeWindowSettings.Title = "Curling 3D";
 nativeWindowSettings.Flags = ContextFlags.ForwardCompatible;
 Window window = new Window(GameWindowSettings.Default, nativeWindowSettings);
@@ -71,7 +71,7 @@ class Object3D
 
         elementBufferObject = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ElementArrayBuffer, elementBufferObject);
-        GL.BufferData(BufferTarget.ElementArrayBuffer, indexCount * sizeof(uint), vertices, BufferUsageHint.StaticDraw);
+        GL.BufferData(BufferTarget.ElementArrayBuffer, indexCount * sizeof(uint), indices, BufferUsageHint.StaticDraw);
 
         shader = new Shader(vertShaderFile, fragShaderFile);
         shader.Use();
