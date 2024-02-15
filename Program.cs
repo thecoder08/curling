@@ -7,7 +7,7 @@ using ObjLoader.Loader.Data.VertexData;
 using ObjLoader.Loader.Data.Elements;
 
 NativeWindowSettings nativeWindowSettings = new NativeWindowSettings();
-nativeWindowSettings.ClientSize = new Vector2i(640, 480);
+nativeWindowSettings.ClientSize = new Vector2i(640, 640);
 nativeWindowSettings.Title = "Curling 3D";
 nativeWindowSettings.Flags = ContextFlags.ForwardCompatible;
 Window window = new Window(GameWindowSettings.Default, nativeWindowSettings);
@@ -71,7 +71,7 @@ class Object3D
 
         elementBufferObject = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ElementArrayBuffer, elementBufferObject);
-        GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), vertices, BufferUsageHint.StaticDraw);
+        GL.BufferData(BufferTarget.ElementArrayBuffer, indexCount * sizeof(uint), vertices, BufferUsageHint.StaticDraw);
 
         shader = new Shader(vertShaderFile, fragShaderFile);
         shader.Use();
@@ -86,7 +86,7 @@ class Object3D
     }
 
     public void updateMatrix() {
-        modelMatrix = Matrix4.CreateTranslation(this.position) * Matrix4.CreateRotationX(rotation.X) * Matrix4.CreateRotationX(rotation.Y) * Matrix4.CreateRotationX(rotation.Z);
+        modelMatrix = Matrix4.CreateTranslation(this.position) * Matrix4.CreateRotationX(rotation.X) * Matrix4.CreateRotationY(rotation.Y) * Matrix4.CreateRotationY(rotation.Z);
     }
 
     public void render() {
@@ -108,7 +108,6 @@ class Camera
 
 class Window : GameWindow
 {
-    private string[] objs = {"rock.obj"/*, "ice.obj"*/};
     private Object3D[] object3Ds = new Object3D[1];
 
     public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) {}
@@ -119,15 +118,14 @@ class Window : GameWindow
         GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GL.Enable(EnableCap.DepthTest);
 
-        for (int i = 0; i < objs.Length; i++) {
-            object3Ds[i] = new Object3D(objs[i], "shader.vert", "shader.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
-        }
+        object3Ds[0] = new Object3D("models/rock-blue.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+        //object3Ds[1] = new Object3D("rock-red.obj", "shader.vert", "shader.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
     }
 
     protected override void OnRenderFrame(FrameEventArgs e) {
         base.OnRenderFrame(e);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-        for (int i = 0; i < objs.Length; i++) {
+        for (int i = 0; i < object3Ds.Length; i++) {
             object3Ds[i].render();
         }
         SwapBuffers();
