@@ -2,9 +2,7 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Graphics.OpenGL4;
-using ObjLoader.Loader.Loaders;
-using ObjLoader.Loader.Data.VertexData;
-using ObjLoader.Loader.Data.Elements;
+using JeremyAnsel.Media.WavefrontObj;
 
 NativeWindowSettings nativeWindowSettings = new NativeWindowSettings();
 nativeWindowSettings.ClientSize = new Vector2i(640, 480);
@@ -22,44 +20,52 @@ class Object3D
 
     float[] vertices;
     uint[] indices;
+    float[] colors;
 
     int elementBufferObject;
     int vertexBufferObject;
     int vertexArrayObject;
+    int colorBufferObject;
+    int colorArrayObject;
 
-    public Object3D(string objFile, string vertShaderFile, string fragShaderFile, Vector3 position, Vector3 rotation) {
-        ObjLoaderFactory objLoaderFactory = new ObjLoaderFactory();
-        IObjLoader objLoader = objLoaderFactory.Create();
-        FileStream fileStream = new FileStream(objFile, FileMode.Open);
-        LoadResult result = objLoader.Load(fileStream);
-        Vertex[] loaderVertices = result.Vertices.ToArray();
-        vertices = new float[loaderVertices.Length * 3];
-        for (int i = 0; i < loaderVertices.Length; i++) {
-            vertices[i * 3] = loaderVertices[i].X;
-            vertices[i * 3 + 1] = loaderVertices[i].Y;
-            vertices[i * 3 + 2] = loaderVertices[i].Z;
-        }
-
-        int indexCount = 0;
-
-        for (int i = 0; i < result.Groups.Count; i++) {
-            for (int j = 0; j < result.Groups[i].Faces.Count; j++) {
-                for (int k = 0; k < result.Groups[i].Faces[j].Count; k++) {
-                    indexCount++;
-                }
+    public Object3D(string objFilePath, string vertShaderFile, string fragShaderFile, Vector3 position, Vector3 rotation) {
+        ObjFile objFile = ObjFile.FromFile(objFilePath);
+        ObjMaterial[] materials = new ObjMaterial[objFile.MaterialLibraries.Count];
+        for (int i = 0; i < objFile.MaterialLibraries.Count; i++) {
+            ObjMaterialFile mtlFile = ObjMaterialFile.FromFile(objFile.MaterialLibraries[i]);
+            for (int j = 0; j < mtlFile.Materials.Count; j++) {
+                materials[i * mtlFile.Materials.Count + j] = mtlFile.Materials[j];
             }
         }
+        ObjMaterialFile 
+        vertices = new float[objFile.Vertices.Count * 3];
+        for (int i = 0; i < objFile.Vertices.Count; i++) {
+            vertices[i * 3] = objFile.Vertices[i].Position.X;
+            vertices[i * 3 + 1] = objFile.Vertices[i].Position.Y;
+            vertices[i * 3 + 2] = objFile.Vertices[i].Position.Z;
+        }
 
-        indices = new uint[indexCount];
-        indexCount = 0;
-
-        for (int i = 0; i < result.Groups.Count; i++) {
-            for (int j = 0; j < result.Groups[i].Faces.Count; j++) {
-                for (int k = 0; k < result.Groups[i].Faces[j].Count; k++) {
-                    indices[indexCount] = Convert.ToUInt32(result.Groups[i].Faces[j][k].VertexIndex);
-                    indexCount++;
-                }
+        indices = new uint[objFile.Faces.Count * 3];
+        colors = new float[objFile.Faces.Count * 4];
+        for (int i = 0; i < objFile.Faces.Count; i++) {
+            for (int j = 0; j < objFile.Faces[i].Vertices.Count; j++) {
+                indices[i * 3 + j] = (uint)objFile.Faces[i].Vertices[j].Vertex;
             }
+            Console.WriteLine(objFile.Faces[i].MaterialName);
+
+            ObjMaterial material = objFile.Materials.FirstOrDefault(m => m.Name == materialName);
+
+            if (material != null)
+            {
+                // Retrieve the diffuse color
+                Color diffuseColor = material.DiffuseColor;
+                // Do something with the diffuse color
+            }
+
+            //colors[i * 4] = objFile.Faces[i].Material.DiffuseColor.R;
+            //colors[i * 4 + 1] = objFile.Faces[i].Material.DiffuseColor.G;
+            //colors[i * 4 + 2] = objFile.Faces[i].Material.DiffuseColor.B;
+            //colors[i * 4 + 3] = objFile.Faces[i].Material.DiffuseColor.A;
         }
 
         vertexArrayObject = GL.GenVertexArray();
@@ -69,17 +75,31 @@ class Object3D
         GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferObject);
         GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
 
+        colorArrayObject = GL.GenVertexArray();
+        GL.BindVertexArray(colorArrayObject);
+
+        colorBufferObject = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ArrayBuffer, colorBufferObject);
+        GL.BufferData(BufferTarget.ArrayBuffer, colors.Length * sizeof(float), colors, BufferUsageHint.StaticDraw);
+
         elementBufferObject = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ElementArrayBuffer, elementBufferObject);
-        GL.BufferData(BufferTarget.ElementArrayBuffer, indexCount * sizeof(uint), indices, BufferUsageHint.StaticDraw);
+        GL.BufferData(BufferTarget.ElementArrayBuffer, objFile.Faces.Count * 3 * sizeof(uint), indices, BufferUsageHint.StaticDraw);
 
         shader = new Shader(vertShaderFile, fragShaderFile);
         shader.Use();
 
         int vertexLocation = shader.GetAttribLocation("aPosition");
+        int vertexColor = shader.GetAttribLocation("aColor");
+        
+        GL.BindVertexArray(vertexArrayObject);
         GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
         GL.EnableVertexAttribArray(vertexLocation);
 
+        GL.BindVertexArray(colorArrayObject);
+        GL.VertexAttribPointer(vertexColor, 4, VertexAttribPointerType.Float, false, 4 * sizeof(float), 0);
+        GL.EnableVertexAttribArray(vertexColor);
+        
         this.position = position;
         this.rotation = rotation;
         updateMatrix();
