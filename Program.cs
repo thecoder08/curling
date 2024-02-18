@@ -30,14 +30,13 @@ class Object3D
 
     public Object3D(string objFilePath, string vertShaderFile, string fragShaderFile, Vector3 position, Vector3 rotation) {
         ObjFile objFile = ObjFile.FromFile(objFilePath);
-        ObjMaterial[] materials = new ObjMaterial[objFile.MaterialLibraries.Count];
+        ObjMaterial[] materials = new ObjMaterial[objFile.MaterialLibraries.Count * 3];
         for (int i = 0; i < objFile.MaterialLibraries.Count; i++) {
             ObjMaterialFile mtlFile = ObjMaterialFile.FromFile(objFile.MaterialLibraries[i]);
             for (int j = 0; j < mtlFile.Materials.Count; j++) {
                 materials[i * mtlFile.Materials.Count + j] = mtlFile.Materials[j];
             }
         }
-        ObjMaterialFile 
         vertices = new float[objFile.Vertices.Count * 3];
         for (int i = 0; i < objFile.Vertices.Count; i++) {
             vertices[i * 3] = objFile.Vertices[i].Position.X;
@@ -53,12 +52,16 @@ class Object3D
             }
             Console.WriteLine(objFile.Faces[i].MaterialName);
 
-            ObjMaterial material = objFile.Materials.FirstOrDefault(m => m.Name == materialName);
+            ObjMaterial material = materials.FirstOrDefault(m => m.Name == objFile.Faces[i].MaterialName);
 
             if (material != null)
             {
                 // Retrieve the diffuse color
-                Color diffuseColor = material.DiffuseColor;
+                ObjVector3 diffuseColor = material.DiffuseColor.Color;
+                colors[something] = diffuseColor.X;
+                colors[something + 1] = diffuseColor.Y;
+                colors[something + 2] = diffuseColor.Z;
+                colors[something + 3] = 1.0;
                 // Do something with the diffuse color
             }
 
