@@ -1,6 +1,6 @@
 # Blender 4.0.2
 # www.blender.org
-mtllib rock-blue.mtl
+mtllib materials/rocks.mtl
 o rock
 v 0.353689 0.000000 0.000000
 v 0.344212 0.061936 0.000000
