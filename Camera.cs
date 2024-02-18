@@ -21,6 +21,6 @@ class Camera
     }
 
     public void updateMatrix() {
-        cameraMatrix = Matrix4.CreateRotationX(rotation.X) * Matrix4.CreateRotationY(rotation.Y) * Matrix4.CreateRotationZ(rotation.Z) * Matrix4.CreateTranslation(this.position) * Matrix4.CreatePerspectiveFieldOfView(fov, aspectRatio, depthNear, depthFar);
+        cameraMatrix = Matrix4.CreateTranslation(Vector3.Divide(position, -1)) * Matrix4.CreateRotationZ(-rotation.Z) * Matrix4.CreateRotationY(-rotation.Y) * Matrix4.CreateRotationX(-rotation.X) * Matrix4.CreatePerspectiveFieldOfView(fov, aspectRatio, depthNear, depthFar);
     }
 }
