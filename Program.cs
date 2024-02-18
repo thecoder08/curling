@@ -12,7 +12,7 @@ window.Run();
 
 class Window : GameWindow
 {
-    private Object3D[] object3Ds = new Object3D[3];
+    Object3D[] object3Ds = new Object3D[3];
     float t = 0;
 
     Camera camera;
