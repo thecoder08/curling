@@ -27,7 +27,7 @@ class Window : GameWindow
     protected override void OnLoad() {
         base.OnLoad();
 
-        GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        GL.ClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.Multisample);
 
