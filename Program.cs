@@ -23,7 +23,8 @@ class Window : GameWindow
     bool controllable = false;
     Vector2 redVelocity = new Vector2(0, 0);
     Vector2 blueVelocity = new Vector2(0, 0);
-    bool collisionOccurred = false;
+
+    float drag = 0.0001f;
 
     public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) {
         camera = new Camera(new Vector3(0, 3, 0), new Vector3(0, 0, 0), (float)Size.X / Size.Y, 1.04f, 0.01f, 1000);
@@ -116,14 +117,15 @@ class Window : GameWindow
             object3Ds[0].position.Z += redVelocity.Y * (float)e.Time;
             object3Ds[1].position.X += blueVelocity.X * (float)e.Time;
             object3Ds[1].position.Z += blueVelocity.Y * (float)e.Time;
-            if (Collision.HaveCollided(new Vector2(object3Ds[0].position.X, object3Ds[0].position.Z), new Vector2(object3Ds[1].position.X, object3Ds[1].position.Z), 0.3f) && !collisionOccurred) {
-                collisionOccurred = true;
-                Console.WriteLine("collision! red: (" + redVelocity.X + ", " + redVelocity.Y + ") blue: (" + blueVelocity.X + ", " + blueVelocity.Y + ")");
+            if (Collision.HaveCollided(new Vector2(object3Ds[0].position.X, object3Ds[0].position.Z), new Vector2(object3Ds[1].position.X, object3Ds[1].position.Z), 0.3f)) {
                 CollisionResult result = Collision.Collide(new Vector2(object3Ds[0].position.X, object3Ds[0].position.Z), redVelocity, object3Ds[0].mass, new Vector2(object3Ds[1].position.X, object3Ds[1].position.Z), blueVelocity, object3Ds[1].mass);
-                Console.WriteLine("after: red: (" + result.velocity1.X + ", " + result.velocity1.Y + ") blue: (" + result.velocity2.X + ", " + result.velocity2.Y + ")");
                 redVelocity = result.velocity1;
                 blueVelocity = result.velocity2;
             }
+            redVelocity.X -= drag*redVelocity.X/object3Ds[0].mass;
+            redVelocity.Y -= drag*redVelocity.Y/object3Ds[0].mass;
+            blueVelocity.X -= drag*blueVelocity.X/object3Ds[0].mass;
+            blueVelocity.Y -= drag*blueVelocity.Y/object3Ds[0].mass;
             object3Ds[0].updateMatrix();
             object3Ds[1].updateMatrix();
         }
