@@ -24,7 +24,7 @@ class Window : GameWindow
     Vector2 redVelocity = new Vector2(0, 0);
     Vector2 blueVelocity = new Vector2(0, 0);
 
-    float drag = 0.0001f;
+    float drag = 0.08f;
 
     public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) {
         camera = new Camera(new Vector3(0, 3, 0), new Vector3(0, 0, 0), (float)Size.X / Size.Y, 1.04f, 0.01f, 1000);
@@ -122,10 +122,10 @@ class Window : GameWindow
                 redVelocity = result.velocity1;
                 blueVelocity = result.velocity2;
             }
-            redVelocity.X -= drag*redVelocity.X/object3Ds[0].mass;
-            redVelocity.Y -= drag*redVelocity.Y/object3Ds[0].mass;
-            blueVelocity.X -= drag*blueVelocity.X/object3Ds[0].mass;
-            blueVelocity.Y -= drag*blueVelocity.Y/object3Ds[0].mass;
+            redVelocity.X -= drag*redVelocity.X*(float)e.Time/object3Ds[0].mass;
+            redVelocity.Y -= drag*redVelocity.Y*(float)e.Time/object3Ds[0].mass;
+            blueVelocity.X -= drag*blueVelocity.X*(float)e.Time/object3Ds[0].mass;
+            blueVelocity.Y -= drag*blueVelocity.Y*(float)e.Time/object3Ds[0].mass;
             object3Ds[0].updateMatrix();
             object3Ds[1].updateMatrix();
         }
