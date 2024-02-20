@@ -2,8 +2,7 @@ using OpenTK.Mathematics;
 using JeremyAnsel.Media.WavefrontObj;
 using OpenTK.Graphics.OpenGL4;
 
-class ObjectUI
-{
+class ObjectUI {
     Matrix4 modelMatrix;
     public Vector3 position;
     public Vector3 rotation;

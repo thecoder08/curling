@@ -12,20 +12,30 @@ nativeWindowSettings.NumberOfSamples = 8;
 Window window = new Window(GameWindowSettings.Default, nativeWindowSettings);
 window.Run();
 
-struct Rock {
-    public Vector3 velocity;
+class Rock {
     public Vector3 position;
     public Vector3 rotation;
+    public Vector3 velocity;
     public float mass;
+    public bool isRed;
+
+    public Rock(Vector3 position, Vector3 rotation, Vector3 velocity, float mass, bool isRed) {
+        this.position = position;
+        this.rotation = rotation;
+        this.velocity = velocity;
+        this.mass = mass;
+        this.isRed = isRed;
+    }
+    public object Clone() {
+        return new Rock(this.position, this.rotation, this.velocity, this.mass, this.isRed);
+    }
 }
 
-class Window : GameWindow
-{
-    Object3D ice;
-    Object3D redRock;
-    Object3D blueRock;
-    Rock[] redRocks = new Rock[1];
-    Rock[] blueRocks = new Rock[1];
+class Window : GameWindow {
+    Object3D ice = null;
+    Object3D redRock = null;
+    Object3D blueRock = null;
+    Rock[] rocks = new Rock[16];
 
     ObjectUI[] objectUIs = new ObjectUI[2];
     double t = 0;
@@ -34,12 +44,18 @@ class Window : GameWindow
     float speed = 1.5f;
     bool controllable = false;
 
-    float drag = 0.08f;
+    float drag = 0.1f;
 
     public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) {
         camera = new Camera(new Vector3(0, 3, 0), new Vector3(0, 0, 0), (float)Size.X / Size.Y, 1.04f, 0.01f, 1000);
-        redRocks[0].mass = 1;
-        blueRocks[0].mass = 1;
+        rocks[0] = new Rock(new Vector3(16.5f, 0.05f, 0), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, true);
+        rocks[8] = new Rock(new Vector3(0, 0.05f, 0.1f), new Vector3(0, 0, 0), new Vector3(3, 0, 0), 1, false);
+        for (int i = 1; i < 8; i++) {
+            rocks[i] = new Rock(new Vector3(0.4f * (i%4) + 21, 0.05f, -1.5f - 0.4f * (i/4)), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, true);
+        }
+        for (int i = 9; i < 16; i++) {
+            rocks[i] = new Rock(new Vector3(0.4f * (i%4) + 21, 0.05f, 0.4f * (i/4) + 1.5f), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, false);
+        }
     }
 
     protected override void OnLoad() {
@@ -62,18 +78,20 @@ class Window : GameWindow
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         ice.render(camera);
         if (controllable) {
-            for (int i = 0; i < redRocks.Length; i++) {
-            redRock.position = redRocks[i].position;
-            redRock.rotation = redRocks[i].rotation;
-            redRock.updateMatrix();
-            redRock.render(camera);
-        }
-        for (int i = 0; i < blueRocks.Length; i++) {
-            blueRock.position = blueRocks[i].position;
-            blueRock.rotation = blueRocks[i].rotation;
-            blueRock.updateMatrix();
-            blueRock.render(camera);
-        }
+            for (int i = 0; i < rocks.Length; i++) {
+                if (rocks[i].isRed) {
+                    redRock.position = rocks[i].position;
+                    redRock.rotation = rocks[i].rotation;
+                    redRock.updateMatrix();
+                    redRock.render(camera);
+                }
+                else {
+                    blueRock.position = rocks[i].position;
+                    blueRock.rotation = rocks[i].rotation;
+                    blueRock.updateMatrix();
+                    blueRock.render(camera);
+                }
+            }
         }
         else {
             redRock.render(camera);
@@ -90,12 +108,9 @@ class Window : GameWindow
 
         if (KeyboardState.IsKeyDown(Keys.Space) && !controllable) {
             controllable = true;
-            camera.position = new Vector3(0, 1, 0);
+            camera.position = new Vector3(16.5f, 1, 0);
             camera.rotation = new Vector3(0, 0, 0);
             camera.updateMatrix();
-            redRocks[0].position = new Vector3(0, 0.05f, 0.1f);
-            redRocks[0].velocity = new Vector3(1, 0, 0);
-            blueRocks[0].position = new Vector3(10, 0.05f, 0);
         }
 
         if (controllable) {
@@ -119,6 +134,9 @@ class Window : GameWindow
                 camera.position.Z += speed * (float)e.Time * (float)Math.Sin(camera.rotation.Y);
                 camera.updateMatrix();
             }
+            if (KeyboardState.IsKeyDown(Keys.C)) {
+                Console.WriteLine("camera position: (" + camera.position.X + ", " + camera.position.Y + ", " + camera.position.Z + ")");
+            }
             if (KeyboardState.IsKeyDown(Keys.Left)) {
                 camera.rotation.Y += speed * (float)e.Time;
                 camera.updateMatrix();
@@ -135,15 +153,29 @@ class Window : GameWindow
                 camera.rotation.X -= speed * (float)e.Time;
                 camera.updateMatrix();
             }
-            redRocks[0].position += redRocks[0].velocity * (float)e.Time;
-            blueRocks[0].position += blueRocks[0].velocity * (float)e.Time;
-            CollisionResult result = Collision.Collide(redRocks[0], blueRocks[0], 0.3f);
-            if (result.didCollide) {
-                redRocks[0].velocity = result.velocity1;
-                blueRocks[0].velocity = result.velocity2;
+            // update position
+            for (int i = 0; i < 16; i++) {
+                rocks[i].position += rocks[i].velocity * (float)e.Time;
             }
-            redRocks[0].velocity -= drag*redRocks[0].velocity*(float)e.Time/redRocks[0].mass;
-            blueRocks[0].velocity -= drag*blueRocks[0].velocity*(float)e.Time/blueRocks[0].mass;
+            // apply collisions if they exist
+            Rock[] newRocks = rocks.Select (a =>(Rock)a.Clone()).ToArray();
+            for (int i = 0; i < rocks.Length; i++) {
+                for (int j = 0; j < rocks.Length; j++) {
+                    if (i == j) {
+                        continue;
+                    }
+                    CollisionResult result = Collision.Collide(newRocks[i], newRocks[j], 0.3f);
+                    if (result.didCollide) {
+                        Console.WriteLine("rock " + i + " collided with " + j);
+                        Console.WriteLine("velocity: (" + result.velocity1.X + ", " + result.velocity1.Y + ", " + result.velocity1.Z + ")");
+                        rocks[i].velocity = result.velocity1;
+                    }
+                }
+            }
+            // apply drag
+            for (int i = 0; i < 16; i++) {
+                rocks[i].velocity -= drag*rocks[i].velocity*(float)e.Time/rocks[i].mass;
+            }
         }
         else {
             camera.rotation.Y = (float)(Math.PI - t)/2;

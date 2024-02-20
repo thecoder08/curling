@@ -1,7 +1,6 @@
 using OpenTK.Mathematics;
 
-class Camera
-{
+class Camera {
     public Matrix4 cameraMatrix;
     public Vector3 position;
     public Vector3 rotation;

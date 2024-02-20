@@ -2,8 +2,7 @@ using OpenTK.Mathematics;
 using JeremyAnsel.Media.WavefrontObj;
 using OpenTK.Graphics.OpenGL4;
 
-class Object3D
-{
+class Object3D {
     Matrix4 modelMatrix;
     public Vector3 position;
     public Vector3 rotation;
@@ -39,6 +38,13 @@ class Object3D
             vertices[i * 3 + 1] = objFile.Vertices[i].Position.Y;
             vertices[i * 3 + 2] = objFile.Vertices[i].Position.Z;
         }
+        // Load normals from .obj
+        float[] normals = new float[objFile.VertexNormals.Count * 3];
+        for (int i = 0; i < objFile.VertexNormals.Count; i++) {
+            normals[i * 3] = objFile.VertexNormals[i].X;
+            normals[i * 3 + 1] = objFile.VertexNormals[i].Y;
+            normals[i * 3 + 2] = objFile.VertexNormals[i].Z;
+        }
 
         vertexArrayObject = GL.GenVertexArray();
         GL.BindVertexArray(vertexArrayObject);
@@ -52,8 +58,7 @@ class Object3D
         numIndices = new int[materials.Length];
 
         //Iterate through materials
-        for (int i = 0; i < materials.Length; i++)
-        {
+        for (int i = 0; i < materials.Length; i++) {
             // Retrieve the diffuse color
             colors[i].X = materials[i].DiffuseColor.Color.X;
             colors[i].Y = materials[i].DiffuseColor.Color.Y;
