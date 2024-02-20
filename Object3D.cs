@@ -9,8 +9,6 @@ class Object3D
     public Vector3 rotation;
     Shader shader;
 
-    public float mass = 1;
-
     int vertexBufferObject;
     int vertexArrayObject;
     int[] elementBufferObjects;

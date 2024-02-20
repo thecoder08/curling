@@ -12,22 +12,34 @@ nativeWindowSettings.NumberOfSamples = 8;
 Window window = new Window(GameWindowSettings.Default, nativeWindowSettings);
 window.Run();
 
+struct Rock {
+    public Vector3 velocity;
+    public Vector3 position;
+    public Vector3 rotation;
+    public float mass;
+}
+
 class Window : GameWindow
 {
-    Object3D[] object3Ds = new Object3D[3];
+    Object3D ice;
+    Object3D redRock;
+    Object3D blueRock;
+    Rock[] redRocks = new Rock[1];
+    Rock[] blueRocks = new Rock[1];
+
     ObjectUI[] objectUIs = new ObjectUI[2];
     double t = 0;
 
     Camera camera;
     float speed = 1.5f;
     bool controllable = false;
-    Vector2 redVelocity = new Vector2(0, 0);
-    Vector2 blueVelocity = new Vector2(0, 0);
 
     float drag = 0.08f;
 
     public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) {
         camera = new Camera(new Vector3(0, 3, 0), new Vector3(0, 0, 0), (float)Size.X / Size.Y, 1.04f, 0.01f, 1000);
+        redRocks[0].mass = 1;
+        blueRocks[0].mass = 1;
     }
 
     protected override void OnLoad() {
@@ -37,9 +49,9 @@ class Window : GameWindow
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.Multisample);
 
-        object3Ds[0] = new Object3D("models/rock-red.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0.05f, 0), new Vector3(0, 0, 0));
-        object3Ds[1] = new Object3D("models/rock-blue.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0.05f, 0), new Vector3(0, 0, 0));
-        object3Ds[2] = new Object3D("models/ice.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+        redRock = new Object3D("models/rock-red.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0.05f, 0), new Vector3(0, 0, 0));
+        blueRock = new Object3D("models/rock-blue.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0.05f, 0), new Vector3(0, 0, 0));
+        ice = new Object3D("models/ice.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
         //object3Ds[3] = new Object3D("models/cube.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 1, 0), new Vector3(0, 0, 0));
         objectUIs[0] = new ObjectUI("models/title.obj", new Vector3(0.5f, 0, 0), new Vector3(0.5f, 0.5f, 0), new Vector3(0, 0, 0), new Vector3(0.5f, 0.5f, 0.5f));
         objectUIs[1] = new ObjectUI("models/space.obj", new Vector3(0, 0, 0.5f), new Vector3(0.5f, 0, 0), new Vector3(0, 0, 0), new Vector3(0.25f, 0.25f, 0.25f));
@@ -48,11 +60,27 @@ class Window : GameWindow
     protected override void OnRenderFrame(FrameEventArgs e) {
         base.OnRenderFrame(e);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-        for (int i = 0; i < object3Ds.Length; i++) {
-            object3Ds[i].render(camera);
+        ice.render(camera);
+        if (controllable) {
+            for (int i = 0; i < redRocks.Length; i++) {
+            redRock.position = redRocks[i].position;
+            redRock.rotation = redRocks[i].rotation;
+            redRock.updateMatrix();
+            redRock.render(camera);
         }
-        for (int i = 0; i < objectUIs.Length; i++) {
-            objectUIs[i].render();
+        for (int i = 0; i < blueRocks.Length; i++) {
+            blueRock.position = blueRocks[i].position;
+            blueRock.rotation = blueRocks[i].rotation;
+            blueRock.updateMatrix();
+            blueRock.render(camera);
+        }
+        }
+        else {
+            redRock.render(camera);
+            blueRock.render(camera);
+            for (int i = 0; i < objectUIs.Length; i++) {
+                objectUIs[i].render();
+            }
         }
         SwapBuffers();
     }
@@ -65,15 +93,9 @@ class Window : GameWindow
             camera.position = new Vector3(0, 1, 0);
             camera.rotation = new Vector3(0, 0, 0);
             camera.updateMatrix();
-            object3Ds[0].position = new Vector3(0, 0.05f, 0.1f);
-            object3Ds[0].updateMatrix();
-            redVelocity = new Vector2(1, 0);
-            object3Ds[1].position = new Vector3(10, 0.05f, 0);
-            object3Ds[1].updateMatrix();
-            objectUIs[0].rotation.Y = (float)Math.PI/2;
-            objectUIs[0].updateMatrix();
-            objectUIs[1].rotation.Y = (float)Math.PI/2;
-            objectUIs[1].updateMatrix();            
+            redRocks[0].position = new Vector3(0, 0.05f, 0.1f);
+            redRocks[0].velocity = new Vector3(1, 0, 0);
+            blueRocks[0].position = new Vector3(10, 0.05f, 0);
         }
 
         if (controllable) {
@@ -113,36 +135,27 @@ class Window : GameWindow
                 camera.rotation.X -= speed * (float)e.Time;
                 camera.updateMatrix();
             }
-            object3Ds[0].position.X += redVelocity.X * (float)e.Time;
-            object3Ds[0].position.Z += redVelocity.Y * (float)e.Time;
-            object3Ds[1].position.X += blueVelocity.X * (float)e.Time;
-            object3Ds[1].position.Z += blueVelocity.Y * (float)e.Time;
-            if (Collision.HaveCollided(new Vector2(object3Ds[0].position.X, object3Ds[0].position.Z), new Vector2(object3Ds[1].position.X, object3Ds[1].position.Z), 0.3f)) {
-                CollisionResult result = Collision.Collide(new Vector2(object3Ds[0].position.X, object3Ds[0].position.Z), redVelocity, object3Ds[0].mass, new Vector2(object3Ds[1].position.X, object3Ds[1].position.Z), blueVelocity, object3Ds[1].mass);
-                redVelocity = result.velocity1;
-                blueVelocity = result.velocity2;
+            redRocks[0].position += redRocks[0].velocity * (float)e.Time;
+            blueRocks[0].position += blueRocks[0].velocity * (float)e.Time;
+            CollisionResult result = Collision.Collide(redRocks[0], blueRocks[0], 0.3f);
+            if (result.didCollide) {
+                redRocks[0].velocity = result.velocity1;
+                blueRocks[0].velocity = result.velocity2;
             }
-            redVelocity.X -= drag*redVelocity.X*(float)e.Time/object3Ds[0].mass;
-            redVelocity.Y -= drag*redVelocity.Y*(float)e.Time/object3Ds[0].mass;
-            blueVelocity.X -= drag*blueVelocity.X*(float)e.Time/object3Ds[0].mass;
-            blueVelocity.Y -= drag*blueVelocity.Y*(float)e.Time/object3Ds[0].mass;
-            object3Ds[0].updateMatrix();
-            object3Ds[1].updateMatrix();
+            redRocks[0].velocity -= drag*redRocks[0].velocity*(float)e.Time/redRocks[0].mass;
+            blueRocks[0].velocity -= drag*blueRocks[0].velocity*(float)e.Time/blueRocks[0].mass;
         }
         else {
             camera.rotation.Y = (float)(Math.PI - t)/2;
             camera.position.X = (float)Math.Cos(t/2) * 10;
             camera.position.Z = (float)Math.Sin(t/2) * 10;
             camera.updateMatrix();
-            object3Ds[0].position.X = (float)Math.Cos(t) * 2;
-            object3Ds[0].position.Z = (float)Math.Sin(t) * 2;
-            object3Ds[0].updateMatrix();
-            object3Ds[1].position.X = -(float)Math.Cos(t) * 2;
-            object3Ds[1].position.Z = -(float)Math.Sin(t) * 2;
-            object3Ds[1].updateMatrix();
-            //object3Ds[3].rotation.X = (float)t;
-            //object3Ds[3].rotation.Y = (float)t;
-            //object3Ds[3].updateMatrix();
+            redRock.position.X = (float)Math.Cos(t) * 2;
+            redRock.position.Z = (float)Math.Sin(t) * 2;
+            redRock.updateMatrix();
+            blueRock.position.X = -(float)Math.Cos(t) * 2;
+            blueRock.position.Z = -(float)Math.Sin(t) * 2;
+            blueRock.updateMatrix();
             objectUIs[0].rotation.Y = (float)t;
             objectUIs[0].updateMatrix();
         }
