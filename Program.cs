@@ -51,10 +51,10 @@ class Window : GameWindow {
         rocks[0] = new Rock(new Vector3(16.5f, 0.05f, 0), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, true);
         rocks[8] = new Rock(new Vector3(0, 0.05f, 0.1f), new Vector3(0, 0, 0), new Vector3(3, 0, 0), 1, false);
         for (int i = 1; i < 8; i++) {
-            rocks[i] = new Rock(new Vector3(0.4f * (i%4) + 21, 0.05f, -1.5f - 0.4f * (i/4)), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, true);
+            rocks[i] = new Rock(new Vector3(0.4f * (i/2) + 21, 0.05f, -1.5f - 0.4f * (i%2)), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, true);
         }
         for (int i = 9; i < 16; i++) {
-            rocks[i] = new Rock(new Vector3(0.4f * (i%4) + 21, 0.05f, 0.4f * (i/4) + 1.5f), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, false);
+            rocks[i] = new Rock(new Vector3(0.4f * (i/2) + 21, 0.05f, 0.4f * (i%2) + 1.5f), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, false);
         }
     }
 
@@ -153,12 +153,9 @@ class Window : GameWindow {
                 camera.rotation.X -= speed * (float)e.Time;
                 camera.updateMatrix();
             }
-            // update position
-            for (int i = 0; i < 16; i++) {
-                rocks[i].position += rocks[i].velocity * (float)e.Time;
-            }
-            // apply collisions if they exist
+            // make deep copy of rocks
             Rock[] newRocks = rocks.Select (a =>(Rock)a.Clone()).ToArray();
+            // apply collisions if they exist
             for (int i = 0; i < rocks.Length; i++) {
                 for (int j = 0; j < rocks.Length; j++) {
                     if (i == j) {
@@ -166,15 +163,14 @@ class Window : GameWindow {
                     }
                     CollisionResult result = Collision.Collide(newRocks[i], newRocks[j], 0.3f);
                     if (result.didCollide) {
-                        Console.WriteLine("rock " + i + " collided with " + j);
-                        Console.WriteLine("velocity: (" + result.velocity1.X + ", " + result.velocity1.Y + ", " + result.velocity1.Z + ")");
                         rocks[i].velocity = result.velocity1;
                     }
                 }
             }
-            // apply drag
+            // apply drag and update position
             for (int i = 0; i < 16; i++) {
                 rocks[i].velocity -= drag*rocks[i].velocity*(float)e.Time/rocks[i].mass;
+                rocks[i].position += rocks[i].velocity * (float)e.Time;
             }
         }
         else {
