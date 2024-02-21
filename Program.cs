@@ -32,29 +32,29 @@ class Rock {
 }
 
 class Window : GameWindow {
-    Object3D ice = null;
-    Object3D redRock = null;
-    Object3D blueRock = null;
+    Object3D ice;
+    Object3D redRock;
+    Object3D blueRock;
     Rock[] rocks = new Rock[16];
 
     ObjectUI[] objectUIs = new ObjectUI[2];
     double t = 0;
 
     Camera camera;
-    float speed = 1.5f;
+    float speed = 3f;
     bool controllable = false;
 
     float drag = 0.1f;
 
     public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) {
         camera = new Camera(new Vector3(0, 3, 0), new Vector3(0, 0, 0), (float)Size.X / Size.Y, 1.04f, 0.01f, 1000);
-        rocks[0] = new Rock(new Vector3(16.5f, 0.05f, 0), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, true);
-        rocks[8] = new Rock(new Vector3(0, 0.05f, 0.1f), new Vector3(0, 0, 0), new Vector3(3, 0, 0), 1, false);
+        rocks[0] = new Rock(new Vector3(16.5f, 0.06f, 0), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, true);
+        rocks[8] = new Rock(new Vector3(-20, 0.06f, 0.1f), new Vector3(0, 0, 0), new Vector3(5, 0, 0), 1, false);
         for (int i = 1; i < 8; i++) {
-            rocks[i] = new Rock(new Vector3(0.4f * (i/2) + 21, 0.05f, -1.5f - 0.4f * (i%2)), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, true);
+            rocks[i] = new Rock(new Vector3(0.4f * (i/2) + 21, 0.06f, -1.5f - 0.4f * (i%2)), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, true);
         }
-        for (int i = 9; i < 16; i++) {
-            rocks[i] = new Rock(new Vector3(0.4f * (i/2) + 21, 0.05f, 0.4f * (i%2) + 1.5f), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, false);
+        for (int i = 1; i < 8; i++) {
+            rocks[i + 8] = new Rock(new Vector3(0.4f * (i/2) + 21, 0.06f, 0.4f * (i%2) + 1.5f), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, false);
         }
     }
 
@@ -108,7 +108,7 @@ class Window : GameWindow {
 
         if (KeyboardState.IsKeyDown(Keys.Space) && !controllable) {
             controllable = true;
-            camera.position = new Vector3(16.5f, 1, 0);
+            camera.position = new Vector3(-16.5f, 1, 0);
             camera.rotation = new Vector3(0, 0, 0);
             camera.updateMatrix();
         }
@@ -134,8 +134,13 @@ class Window : GameWindow {
                 camera.position.Z += speed * (float)e.Time * (float)Math.Sin(camera.rotation.Y);
                 camera.updateMatrix();
             }
-            if (KeyboardState.IsKeyDown(Keys.C)) {
-                Console.WriteLine("camera position: (" + camera.position.X + ", " + camera.position.Y + ", " + camera.position.Z + ")");
+            if (KeyboardState.IsKeyDown(Keys.LeftShift)) {
+                camera.position.Y -= speed * (float)e.Time;
+                camera.updateMatrix();
+            }
+            if (KeyboardState.IsKeyDown(Keys.Space)) {
+                camera.position.Y += speed * (float)e.Time;
+                camera.updateMatrix();
             }
             if (KeyboardState.IsKeyDown(Keys.Left)) {
                 camera.rotation.Y += speed * (float)e.Time;
@@ -163,7 +168,7 @@ class Window : GameWindow {
                     }
                     CollisionResult result = Collision.Collide(newRocks[i], newRocks[j], 0.3f);
                     if (result.didCollide) {
-                        rocks[i].velocity = result.velocity1;
+                        rocks[i].velocity = result.velocity;
                     }
                 }
             }
