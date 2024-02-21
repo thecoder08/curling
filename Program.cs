@@ -45,6 +45,7 @@ class Window : GameWindow {
     float speed = 3f;
     string phase = "title";
 
+    int currentRock = 2;
     float drag = 0.1f;
 
     public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) {
@@ -194,17 +195,17 @@ class Window : GameWindow {
         }
         else if (phase == "aim") {
             if (KeyboardState.IsKeyDown(Keys.Left)) {
-                camera.rotation.Y += speed/2 * (float)e.Time;
+                camera.rotation.Y += speed/5 * (float)e.Time;
                 camera.updateMatrix();
             }
             if (KeyboardState.IsKeyDown(Keys.Right)) {
-                camera.rotation.Y -= speed/2 * (float)e.Time;
+                camera.rotation.Y -= speed/5 * (float)e.Time;
                 camera.updateMatrix();
             }
             if (KeyboardState.IsKeyDown(Keys.N)) {
                 phase = "sweep";
-                rocks[2].position = new Vector3(-20, 0.06f, 0);
-                rocks[2].velocity = new Vector3(5, 0, 0);
+                rocks[currentRock].position = new Vector3(-20, 0.06f, 0);
+                rocks[currentRock].velocity = new Vector3(5, 0, 0);
                 camera.position = new Vector3(-20, 3, 3);
                 camera.rotation = new Vector3(-0.78f, 0, 0);
                 camera.updateMatrix();
@@ -214,22 +215,43 @@ class Window : GameWindow {
 
         }
         else if (phase == "sweep") {
-            broom.position.X = rocks[2].position.X + 0.5f;
-            camera.position.X = rocks[2].position.X;
+            broom.position.X = rocks[currentRock].position.X + 0.5f;
             if (KeyboardState.IsKeyDown(Keys.Space)) {
+                drag = 0.1f;
                 broom.position.Z = (float)Math.Sin(t*20)/5;
             }
             else {
+                drag = 0.5f;
                 broom.position.Z = 2;
             }
             broom.updateMatrix();
+
+            camera.position.X = rocks[currentRock].position.X;
             if (KeyboardState.IsKeyDown(Keys.Up)) {
-                camera.rotation.X += speed * (float)e.Time;
+                camera.rotation.X += speed/2 * (float)e.Time;
             }
             if (KeyboardState.IsKeyDown(Keys.Down)) {
-                camera.rotation.X -= speed * (float)e.Time;
+                camera.rotation.X -= speed/2 * (float)e.Time;
             }
             camera.updateMatrix();
+
+            bool allRocksStopped = true;
+            for (int i = 0; i < 16; i++) {
+                if (rocks[i].velocity.Length > 0.01f) {
+                    allRocksStopped = false;
+                    break;
+                }
+            }
+            if (allRocksStopped) {
+                phase = "broom";
+                camera.position = new Vector3(20f, 1, 0);
+                camera.rotation = new Vector3(0, (float)Math.PI/2, 0);
+                camera.updateMatrix();
+                broom.position = new Vector3(16.5f, 0, 0);
+                broom.rotation = new Vector3(0, (float)-Math.PI/2, 0);
+                broom.updateMatrix();
+                currentRock++;
+            }
         }
         else if (phase == "title") {
             camera.rotation.Y = (float)(Math.PI - t)/2;
