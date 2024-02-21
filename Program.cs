@@ -35,6 +35,7 @@ class Window : GameWindow {
     Object3D ice;
     Object3D redRock;
     Object3D blueRock;
+    Object3D broom;
     Rock[] rocks = new Rock[16];
 
     ObjectUI[] objectUIs = new ObjectUI[2];
@@ -42,7 +43,7 @@ class Window : GameWindow {
 
     Camera camera;
     float speed = 3f;
-    bool controllable = false;
+    string phase = "title";
 
     float drag = 0.1f;
 
@@ -67,8 +68,9 @@ class Window : GameWindow {
 
         redRock = new Object3D("models/rock-red.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0.05f, 0), new Vector3(0, 0, 0));
         blueRock = new Object3D("models/rock-blue.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0.05f, 0), new Vector3(0, 0, 0));
-        ice = new Object3D("models/ice.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
-        //object3Ds[3] = new Object3D("models/cube.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 1, 0), new Vector3(0, 0, 0));
+        ice = new Object3D("models/ice.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0)); 
+        broom = new Object3D("models/broom.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+        //cube = new Object3D("models/cube.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 1, 0), new Vector3(0, 0, 0));
         objectUIs[0] = new ObjectUI("models/title.obj", new Vector3(0.5f, 0, 0), new Vector3(0.5f, 0.5f, 0), new Vector3(0, 0, 0), new Vector3(0.5f, 0.5f, 0.5f));
         objectUIs[1] = new ObjectUI("models/space.obj", new Vector3(0, 0, 0.5f), new Vector3(0.5f, 0, 0), new Vector3(0, 0, 0), new Vector3(0.25f, 0.25f, 0.25f));
     }
@@ -77,7 +79,15 @@ class Window : GameWindow {
         base.OnRenderFrame(e);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         ice.render(camera);
-        if (controllable) {
+        broom.render(camera);
+        if (phase == "title") {
+            redRock.render(camera);
+            blueRock.render(camera);
+            for (int i = 0; i < objectUIs.Length; i++) {
+                objectUIs[i].render();
+            }
+        }
+        else {
             for (int i = 0; i < rocks.Length; i++) {
                 if (rocks[i].isRed) {
                     redRock.position = rocks[i].position;
@@ -93,27 +103,13 @@ class Window : GameWindow {
                 }
             }
         }
-        else {
-            redRock.render(camera);
-            blueRock.render(camera);
-            for (int i = 0; i < objectUIs.Length; i++) {
-                objectUIs[i].render();
-            }
-        }
         SwapBuffers();
     }
 
     protected override void OnUpdateFrame(FrameEventArgs e) {
         base.OnUpdateFrame(e);
 
-        if (KeyboardState.IsKeyDown(Keys.Space) && !controllable) {
-            controllable = true;
-            camera.position = new Vector3(-16.5f, 1, 0);
-            camera.rotation = new Vector3(0, 0, 0);
-            camera.updateMatrix();
-        }
-
-        if (controllable) {
+        if (phase == "freecam") {
             if (KeyboardState.IsKeyDown(Keys.W)) {
                 camera.position.X -= speed * (float)e.Time * (float)Math.Sin(camera.rotation.Y);
                 camera.position.Z -= speed * (float)e.Time * (float)Math.Cos(camera.rotation.Y);
@@ -142,6 +138,15 @@ class Window : GameWindow {
                 camera.position.Y += speed * (float)e.Time;
                 camera.updateMatrix();
             }
+            if (KeyboardState.IsKeyDown(Keys.N)) {
+                phase = "broom";
+                camera.position = new Vector3(20f, 1, 0);
+                camera.rotation = new Vector3(0, (float)Math.PI/2, 0);
+                camera.updateMatrix();
+                broom.position = new Vector3(16.5f, 0, 0);
+                broom.rotation = new Vector3(0, (float)-Math.PI/2, 0);
+                broom.updateMatrix();
+            }
             if (KeyboardState.IsKeyDown(Keys.Left)) {
                 camera.rotation.Y += speed * (float)e.Time;
                 camera.updateMatrix();
@@ -158,27 +163,75 @@ class Window : GameWindow {
                 camera.rotation.X -= speed * (float)e.Time;
                 camera.updateMatrix();
             }
-            // make deep copy of rocks
-            Rock[] newRocks = rocks.Select (a =>(Rock)a.Clone()).ToArray();
-            // apply collisions if they exist
-            for (int i = 0; i < rocks.Length; i++) {
-                for (int j = 0; j < rocks.Length; j++) {
-                    if (i == j) {
-                        continue;
-                    }
-                    CollisionResult result = Collision.Collide(newRocks[i], newRocks[j], 0.3f);
-                    if (result.didCollide) {
-                        rocks[i].velocity = result.velocity;
-                    }
-                }
+        }
+        else if (phase == "broom") {
+            if (KeyboardState.IsKeyDown(Keys.Left)) {
+                camera.position.Z += speed * (float)e.Time;
+                camera.updateMatrix();
+                broom.position.Z = camera.position.Z;
+                broom.updateMatrix();
             }
-            // apply drag and update position
-            for (int i = 0; i < 16; i++) {
-                rocks[i].velocity -= drag*rocks[i].velocity*(float)e.Time/rocks[i].mass;
-                rocks[i].position += rocks[i].velocity * (float)e.Time;
+            if (KeyboardState.IsKeyDown(Keys.Right)) {
+                camera.position.Z -= speed * (float)e.Time;
+                camera.updateMatrix();
+                broom.position.Z = camera.position.Z;
+                broom.updateMatrix();
+            }
+            if (KeyboardState.IsKeyDown(Keys.Up)) {
+                broom.position.X -= speed * (float)e.Time;
+                broom.updateMatrix();
+            }
+            if (KeyboardState.IsKeyDown(Keys.Down)) {
+                broom.position.X += speed * (float)e.Time;
+                broom.updateMatrix();
+            }
+            if (KeyboardState.IsKeyDown(Keys.Space)) {
+                phase = "aim";
+                camera.position = new Vector3(-20, 0.5f, 0);
+                camera.rotation = new Vector3(0, (float)-Math.PI/2, 0);
+                camera.updateMatrix();
             }
         }
-        else {
+        else if (phase == "aim") {
+            if (KeyboardState.IsKeyDown(Keys.Left)) {
+                camera.rotation.Y += speed/2 * (float)e.Time;
+                camera.updateMatrix();
+            }
+            if (KeyboardState.IsKeyDown(Keys.Right)) {
+                camera.rotation.Y -= speed/2 * (float)e.Time;
+                camera.updateMatrix();
+            }
+            if (KeyboardState.IsKeyDown(Keys.N)) {
+                phase = "sweep";
+                rocks[2].position = new Vector3(-20, 0.06f, 0);
+                rocks[2].velocity = new Vector3(5, 0, 0);
+                camera.position = new Vector3(-20, 3, 3);
+                camera.rotation = new Vector3(-0.78f, 0, 0);
+                camera.updateMatrix();
+            }
+        }
+        else if (phase == "throw") {
+
+        }
+        else if (phase == "sweep") {
+            broom.position.X = rocks[2].position.X + 0.5f;
+            camera.position.X = rocks[2].position.X;
+            if (KeyboardState.IsKeyDown(Keys.Space)) {
+                broom.position.Z = (float)Math.Sin(t*20)/5;
+            }
+            else {
+                broom.position.Z = 2;
+            }
+            broom.updateMatrix();
+            if (KeyboardState.IsKeyDown(Keys.Up)) {
+                camera.rotation.X += speed * (float)e.Time;
+            }
+            if (KeyboardState.IsKeyDown(Keys.Down)) {
+                camera.rotation.X -= speed * (float)e.Time;
+            }
+            camera.updateMatrix();
+        }
+        else if (phase == "title") {
             camera.rotation.Y = (float)(Math.PI - t)/2;
             camera.position.X = (float)Math.Cos(t/2) * 10;
             camera.position.Z = (float)Math.Sin(t/2) * 10;
@@ -191,6 +244,32 @@ class Window : GameWindow {
             blueRock.updateMatrix();
             objectUIs[0].rotation.Y = (float)t;
             objectUIs[0].updateMatrix();
+            if (KeyboardState.IsKeyDown(Keys.Space)) {
+                phase = "freecam";
+                camera.position = new Vector3(-16.5f, 1, 0);
+                camera.rotation = new Vector3(0, 0, 0);
+                camera.updateMatrix();
+            }
+        }
+
+        if (phase != "title") {
+            // make deep copy of rocks
+            Rock[] newRocks = rocks.Select (a =>(Rock)a.Clone()).ToArray();
+            for (int i = 0; i < rocks.Length; i++) {
+                for (int j = 0; j < rocks.Length; j++) {
+                    if (i == j) {
+                        continue;
+                    }
+                    // apply collisions if they exist
+                    CollisionResult result = Collision.Collide(newRocks[i], newRocks[j], 0.3f);
+                    if (result.didCollide) {
+                        rocks[i].velocity = result.velocity;
+                    }
+                }
+                // add drag and update position
+                rocks[i].velocity -= drag*rocks[i].velocity*(float)e.Time/rocks[i].mass;
+                rocks[i].position += rocks[i].velocity * (float)e.Time;
+            }
         }
 
         t += e.Time;
@@ -200,7 +279,7 @@ class Window : GameWindow {
         base.OnResize(e);
         camera.aspectRatio = (float)Size.X / Size.Y;
         camera.updateMatrix();
-        if (!controllable) {
+        if (phase == "title") {
                 objectUIs[0].scale = new Vector3(1/camera.aspectRatio * 0.5f, camera.aspectRatio * 0.5f, 0.5f);
                 objectUIs[0].updateMatrix();
                 objectUIs[1].scale = new Vector3(1/camera.aspectRatio * 0.25f, camera.aspectRatio * 0.25f, 0.25f);

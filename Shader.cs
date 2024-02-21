@@ -70,9 +70,6 @@ using OpenTK.Mathematics;
             // Next, allocate the dictionary to hold the locations.
             _uniformLocations = new Dictionary<string, int>();
 
-            // LENNON
-            GL.UseProgram(Handle);
-
             // Loop over all the uniforms,
             for (var i = 0; i < numberOfUniforms; i++)
             {
