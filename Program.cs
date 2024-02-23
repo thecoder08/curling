@@ -36,13 +36,14 @@ class Window : GameWindow {
     Object3D redRock;
     Object3D blueRock;
     Object3D broom;
+    Object3D cube;
     Rock[] rocks = new Rock[16];
 
     ObjectUI[] objectUIs = new ObjectUI[2];
     double t = 0;
 
     Camera camera;
-    float speed = 3f;
+    float speed = 3;
     string phase = "title";
 
     int currentRock = 2;
@@ -67,11 +68,11 @@ class Window : GameWindow {
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.Multisample);
 
-        redRock = new Object3D("models/rock-red.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0.05f, 0), new Vector3(0, 0, 0));
-        blueRock = new Object3D("models/rock-blue.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0.05f, 0), new Vector3(0, 0, 0));
+        redRock = new Object3D("models/rock-austin.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0.05f, 0), new Vector3(0, 0, 0));
+        blueRock = new Object3D("models/rock-blue.obj", "shaders/shader-smooth.vert", "shaders/shader-smooth.frag", new Vector3(0, 0.05f, 0), new Vector3(0, 0, 0));
         ice = new Object3D("models/ice.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0)); 
         broom = new Object3D("models/broom.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
-        //cube = new Object3D("models/cube.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 1, 0), new Vector3(0, 0, 0));
+        //cube = new Object3D("models/cube.obj", "shaders/shader-smooth.vert", "shaders/shader-smooth.frag", new Vector3(0, 1, 0), new Vector3(0, 0, 0));
         objectUIs[0] = new ObjectUI("models/title.obj", new Vector3(0.5f, 0, 0), new Vector3(0.5f, 0.5f, 0), new Vector3(0, 0, 0), new Vector3(0.5f, 0.5f, 0.5f));
         objectUIs[1] = new ObjectUI("models/space.obj", new Vector3(0, 0, 0.5f), new Vector3(0.5f, 0, 0), new Vector3(0, 0, 0), new Vector3(0.25f, 0.25f, 0.25f));
     }
@@ -81,6 +82,7 @@ class Window : GameWindow {
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         ice.render(camera);
         broom.render(camera);
+        //cube.render(camera);
         if (phase == "title") {
             redRock.render(camera);
             blueRock.render(camera);
@@ -268,7 +270,7 @@ class Window : GameWindow {
             objectUIs[0].updateMatrix();
             if (KeyboardState.IsKeyDown(Keys.Space)) {
                 phase = "freecam";
-                camera.position = new Vector3(-16.5f, 1, 0);
+                camera.position = new Vector3(16.5f, 1, 0);
                 camera.rotation = new Vector3(0, 0, 0);
                 camera.updateMatrix();
             }
@@ -289,8 +291,9 @@ class Window : GameWindow {
                     }
                 }
                 // add drag and update position
-                rocks[i].velocity -= drag*rocks[i].velocity*(float)e.Time/rocks[i].mass;
+                rocks[i].velocity -= drag*rocks[i].velocity*(float)e.Time/rocks[i].mass*0.5f;
                 rocks[i].position += rocks[i].velocity * (float)e.Time;
+                rocks[i].velocity -= drag*rocks[i].velocity*(float)e.Time/rocks[i].mass*0.5f;
             }
         }
 

@@ -8,11 +8,12 @@ class Object3D {
     public Vector3 rotation;
     Shader shader;
 
-    int vertexBufferObject;
-    int vertexArrayObject;
-    int[] elementBufferObjects;
-    int[] numIndices;
+    int[] vertexArrayObjects;
+    int[] numVertices;
     Vector3[] colors;
+
+    double dir;
+    Vector3 lightDir = new Vector3(0, 1, 0);
 
     public Object3D(string objFilePath, string vertShaderFile, string fragShaderFile, Vector3 position, Vector3 rotation) {
         ObjFile objFile = ObjFile.FromFile(objFilePath);
@@ -31,72 +32,62 @@ class Object3D {
             }
         }
 
-        // Load vertices from .obj
-        float[] vertices = new float[objFile.Vertices.Count * 3];
-        for (int i = 0; i < objFile.Vertices.Count; i++) {
-            vertices[i * 3] = objFile.Vertices[i].Position.X;
-            vertices[i * 3 + 1] = objFile.Vertices[i].Position.Y;
-            vertices[i * 3 + 2] = objFile.Vertices[i].Position.Z;
-        }
-        // Load normals from .obj
-        float[] normals = new float[objFile.VertexNormals.Count * 3];
-        for (int i = 0; i < objFile.VertexNormals.Count; i++) {
-            normals[i * 3] = objFile.VertexNormals[i].X;
-            normals[i * 3 + 1] = objFile.VertexNormals[i].Y;
-            normals[i * 3 + 2] = objFile.VertexNormals[i].Z;
-        }
-
-        vertexArrayObject = GL.GenVertexArray();
-        GL.BindVertexArray(vertexArrayObject);
-
-        vertexBufferObject = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferObject);
-        GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
-
-        elementBufferObjects = new int[materials.Length];
+        vertexArrayObjects = new int[materials.Length];
         colors = new Vector3[materials.Length];
-        numIndices = new int[materials.Length];
-
-        //Iterate through materials
-        for (int i = 0; i < materials.Length; i++) {
-            // Retrieve the diffuse color
-            colors[i].X = materials[i].DiffuseColor.Color.X;
-            colors[i].Y = materials[i].DiffuseColor.Color.Y;
-            colors[i].Z = materials[i].DiffuseColor.Color.Z;
-
-            // Count faces that use this material
-            numIndices[i] = 0;
-            for (int j = 0; j < objFile.Faces.Count; j++) {
-                if (objFile.Faces[j].MaterialName == materials[i].Name) {
-                    numIndices[i] += 3;
-                }
-            }
-
-            // Retrieve indices that use this material
-            uint[] indices = new uint[numIndices[i]];
-            int foundIndex = 0;
-            for (int j = 0; j < objFile.Faces.Count; j++) {
-                if (objFile.Faces[j].MaterialName == materials[i].Name) {
-                    indices[foundIndex * 3] = (uint)objFile.Faces[j].Vertices[0].Vertex - 1;
-                    indices[foundIndex * 3 + 1] = (uint)objFile.Faces[j].Vertices[1].Vertex - 1;
-                    indices[foundIndex * 3 + 2] = (uint)objFile.Faces[j].Vertices[2].Vertex - 1;
-                    foundIndex++;
-                }
-            }
-
-            elementBufferObjects[i] = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, elementBufferObjects[i]);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, numIndices[i] * sizeof(uint), indices, BufferUsageHint.StaticDraw);
-        }
+        numVertices = new int[materials.Length];
 
         shader = new Shader(vertShaderFile, fragShaderFile);
         shader.Use();
 
         int vertexLocation = shader.GetAttribLocation("aPosition");
-        
-        GL.BindVertexArray(vertexArrayObject);
-        GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+        int vertexNormal = shader.GetAttribLocation("aNormal");
+
+        //Iterate through materials
+        for (int i = 0; i < materials.Length; i++) {
+
+            // Retrieve the diffuse color
+            colors[i].X = materials[i].DiffuseColor.Color.X;
+            colors[i].Y = materials[i].DiffuseColor.Color.Y;
+            colors[i].Z = materials[i].DiffuseColor.Color.Z;
+
+            // Count vertices that use this material
+            int verticesUsing = 0;
+            for (int j = 0; j < objFile.Faces.Count; j++) {
+                if (objFile.Faces[j].MaterialName == materials[i].Name) {
+                    verticesUsing++;
+                }
+            }
+            numVertices[i] = verticesUsing;
+
+            // Load vertices from .obj
+            int foundIndex = 0;
+            float[] vertices = new float[verticesUsing * 6];
+            for (int j = 0; j < objFile.Faces.Count; j++) {
+                if (objFile.Faces[j].MaterialName == materials[i].Name) {
+                    for (int k = 0; k < objFile.Faces[i].Vertices.Count; k++) {
+                        vertices[foundIndex * 6] = objFile.Vertices[objFile.Faces[j].Vertices[k].Vertex - 1].Position.X;
+                        vertices[foundIndex * 6 + 1] = objFile.Vertices[objFile.Faces[j].Vertices[k].Vertex - 1].Position.Y;
+                        vertices[foundIndex * 6 + 2] = objFile.Vertices[objFile.Faces[j].Vertices[k].Vertex - 1].Position.Z;
+                        vertices[foundIndex * 6 + 3] = objFile.VertexNormals[objFile.Faces[j].Vertices[k].Normal - 1].X;
+                        vertices[foundIndex * 6 + 4] = objFile.VertexNormals[objFile.Faces[j].Vertices[k].Normal - 1].Y;
+                        vertices[foundIndex * 6 + 5] = objFile.VertexNormals[objFile.Faces[j].Vertices[k].Normal - 1].Z;
+                        
+                    }
+                    foundIndex++;
+                }
+            }
+
+            vertexArrayObjects[i] = GL.GenVertexArray();
+            GL.BindVertexArray(vertexArrayObjects[i]);
+            int vertexBufferObject = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferObject);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+
+        GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 0);
         GL.EnableVertexAttribArray(vertexLocation);
+        GL.VertexAttribPointer(vertexNormal, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3);
+        GL.EnableVertexAttribArray(vertexNormal);
+        }
         
         this.position = position;
         this.rotation = rotation;
@@ -108,16 +99,27 @@ class Object3D {
     }
 
     public void render(Camera camera) {
-        GL.BindVertexArray(vertexArrayObject);
 
-        for (int i = 0; i < elementBufferObjects.Length; i++) {
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, elementBufferObjects[i]);
+        for (int i = 0; i < vertexArrayObjects.Length; i++) {  
+            GL.BindVertexArray(vertexArrayObjects[i]);
 
             shader.Use();
             shader.SetMatrix4("mvp", modelMatrix * camera.cameraMatrix);
             shader.SetVector3("color", colors[i]);
+            shader.SetVector3("lightDir", lightDir);
 
-            GL.DrawElements(PrimitiveType.Triangles, numIndices[i], DrawElementsType.UnsignedInt, 0);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, numVertices[i]);
+
+            dir += 0.001;
+            lightDir.X = (float)Math.Sin(dir);
+            lightDir.Z = (float)Math.Cos(dir);
         }
+    }
+    static Vector3 Average(ObjVector3 a, ObjVector3 b, ObjVector3 c) {
+        Vector3 sum;
+        sum.X = a.X + b.X + c.X;
+        sum.Y = a.Y + b.Y + c.Y;
+        sum.Z = a.Z + b.Z + c.Z;
+        return sum / 3;
     }
 }
