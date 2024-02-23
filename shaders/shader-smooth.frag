@@ -9,7 +9,10 @@ uniform vec3 color;
 
 void main()
 {
-    float intensity = dot(normalize(fragNormal), normalize(lightDir));
-    intensity = clamp(intensity, 0.0, 1.0);
+    float intensity = max(dot(normalize(fragNormal), normalize(lightDir)), 0.0);
+    //intensity = lightDir.x;
+    intensity = 1.0;
     outputColor = vec4(color * intensity, 1.0);
+    outputColor = vec4(fragNormal, 1.0);
+
 }

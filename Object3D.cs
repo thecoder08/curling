@@ -12,7 +12,7 @@ class Object3D {
     int[] numVertices;
     Vector3[] colors;
 
-    double dir;
+    public double dir;
     Vector3 lightDir = new Vector3(0, 1, 0);
 
     public Object3D(string objFilePath, string vertShaderFile, string fragShaderFile, Vector3 position, Vector3 rotation) {
@@ -54,7 +54,9 @@ class Object3D {
             int verticesUsing = 0;
             for (int j = 0; j < objFile.Faces.Count; j++) {
                 if (objFile.Faces[j].MaterialName == materials[i].Name) {
-                    verticesUsing++;
+                    for (int k = 0; k < objFile.Faces[i].Vertices.Count; k++) {
+                        verticesUsing++;
+                    }
                 }
             }
             numVertices[i] = verticesUsing;
@@ -64,17 +66,22 @@ class Object3D {
             float[] vertices = new float[verticesUsing * 6];
             for (int j = 0; j < objFile.Faces.Count; j++) {
                 if (objFile.Faces[j].MaterialName == materials[i].Name) {
-                    for (int k = 0; k < objFile.Faces[i].Vertices.Count; k++) {
+                    for (int k = 0; k < 3; k++) {
                         vertices[foundIndex * 6] = objFile.Vertices[objFile.Faces[j].Vertices[k].Vertex - 1].Position.X;
                         vertices[foundIndex * 6 + 1] = objFile.Vertices[objFile.Faces[j].Vertices[k].Vertex - 1].Position.Y;
                         vertices[foundIndex * 6 + 2] = objFile.Vertices[objFile.Faces[j].Vertices[k].Vertex - 1].Position.Z;
                         vertices[foundIndex * 6 + 3] = objFile.VertexNormals[objFile.Faces[j].Vertices[k].Normal - 1].X;
                         vertices[foundIndex * 6 + 4] = objFile.VertexNormals[objFile.Faces[j].Vertices[k].Normal - 1].Y;
                         vertices[foundIndex * 6 + 5] = objFile.VertexNormals[objFile.Faces[j].Vertices[k].Normal - 1].Z;
-                        
+                        foundIndex++;
                     }
-                    foundIndex++;
                 }
+            }
+
+            if (objFilePath == "models/cube.obj") {
+            for (int j = 0; j < 6; j++) {
+                Console.WriteLine(vertices[j*6] + " " + vertices[j*6+1] + " " + vertices[j*6+2] + " " + vertices[j*6+3] + " " + vertices[j*6+4] + " " + vertices[j*6+5]);
+            }
             }
 
             vertexArrayObjects[i] = GL.GenVertexArray();
@@ -105,12 +112,11 @@ class Object3D {
 
             shader.Use();
             shader.SetMatrix4("mvp", modelMatrix * camera.cameraMatrix);
-            shader.SetVector3("color", colors[i]);
-            shader.SetVector3("lightDir", lightDir);
+            //shader.SetVector3("color", colors[i]);
+            //shader.SetVector3("lightDir", lightDir);
 
             GL.DrawArrays(PrimitiveType.Triangles, 0, numVertices[i]);
 
-            dir += 0.001;
             lightDir.X = (float)Math.Sin(dir);
             lightDir.Z = (float)Math.Cos(dir);
         }

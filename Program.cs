@@ -72,7 +72,7 @@ class Window : GameWindow {
         blueRock = new Object3D("models/rock-blue.obj", "shaders/shader-smooth.vert", "shaders/shader-smooth.frag", new Vector3(0, 0.05f, 0), new Vector3(0, 0, 0));
         ice = new Object3D("models/ice.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0)); 
         broom = new Object3D("models/broom.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
-        //cube = new Object3D("models/cube.obj", "shaders/shader-smooth.vert", "shaders/shader-smooth.frag", new Vector3(0, 1, 0), new Vector3(0, 0, 0));
+        cube = new Object3D("models/cube.obj", "shaders/shader-smooth.vert", "shaders/shader-smooth.frag", new Vector3(0, 1, 0), new Vector3(0, 0, 0));
         objectUIs[0] = new ObjectUI("models/title.obj", new Vector3(0.5f, 0, 0), new Vector3(0.5f, 0.5f, 0), new Vector3(0, 0, 0), new Vector3(0.5f, 0.5f, 0.5f));
         objectUIs[1] = new ObjectUI("models/space.obj", new Vector3(0, 0, 0.5f), new Vector3(0.5f, 0, 0), new Vector3(0, 0, 0), new Vector3(0.25f, 0.25f, 0.25f));
     }
@@ -82,7 +82,7 @@ class Window : GameWindow {
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         ice.render(camera);
         broom.render(camera);
-        //cube.render(camera);
+        cube.render(camera);
         if (phase == "title") {
             redRock.render(camera);
             blueRock.render(camera);
@@ -298,6 +298,8 @@ class Window : GameWindow {
         }
 
         t += e.Time;
+        blueRock.dir += e.Time;
+        cube.dir += e.Time;
     }
 
     protected override void OnResize(ResizeEventArgs e) {
