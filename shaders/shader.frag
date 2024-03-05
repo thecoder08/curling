@@ -4,7 +4,7 @@ out vec4 outputColor;
 
 uniform highp vec3 color;
 uniform highp vec3 lightDir;
-out vec3 dummy;
+vec3 dummy;
 
 void main()
 {

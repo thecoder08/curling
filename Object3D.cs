@@ -72,16 +72,16 @@ class Object3D {
                         vertices[foundIndex * 6 + 2] = objFile.Vertices[objFile.Faces[j].Vertices[k].Vertex - 1].Position.Z;
                         vertices[foundIndex * 6 + 3] = objFile.VertexNormals[objFile.Faces[j].Vertices[k].Normal - 1].X;
                         vertices[foundIndex * 6 + 4] = objFile.VertexNormals[objFile.Faces[j].Vertices[k].Normal - 1].Y;
-                        vertices[foundIndex * 6 + 5] = objFile.VertexNormals[objFile.Faces[j].Vertices[k].Normal - 1].Z;
+                        vertices[foundIndex * 6 + 5] = objFile.VertexNormals[objFile.Faces[j].Vertices[k].Normal - 1].Z;                     
                         foundIndex++;
                     }
                 }
             }
 
             if (objFilePath == "models/cube.obj") {
-            for (int j = 0; j < 6; j++) {
-                Console.WriteLine(vertices[j*6] + " " + vertices[j*6+1] + " " + vertices[j*6+2] + " " + vertices[j*6+3] + " " + vertices[j*6+4] + " " + vertices[j*6+5]);
-            }
+                for (int j = 0; j < 6; j++) {
+                    Console.WriteLine(vertices[j*6] + " " + vertices[j*6+1] + " " + vertices[j*6+2] + " " + vertices[j*6+3] + " " + vertices[j*6+4] + " " + vertices[j*6+5]);
+                }
             }
 
             vertexArrayObjects[i] = GL.GenVertexArray();
@@ -92,7 +92,7 @@ class Object3D {
 
         GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 0);
         GL.EnableVertexAttribArray(vertexLocation);
-        GL.VertexAttribPointer(vertexNormal, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3);
+        GL.VertexAttribPointer(vertexNormal, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3 * sizeof(float));
         GL.EnableVertexAttribArray(vertexNormal);
         }
         
@@ -112,13 +112,10 @@ class Object3D {
 
             shader.Use();
             shader.SetMatrix4("mvp", modelMatrix * camera.cameraMatrix);
-            //shader.SetVector3("color", colors[i]);
-            //shader.SetVector3("lightDir", lightDir);
+            shader.SetVector3("color", colors[i]);
+            shader.SetVector3("lightDir", Vector3.Normalize(new Vector3((float)Math.Sin(dir), 1, (float)Math.Cos(dir))));
 
             GL.DrawArrays(PrimitiveType.Triangles, 0, numVertices[i]);
-
-            lightDir.X = (float)Math.Sin(dir);
-            lightDir.Z = (float)Math.Cos(dir);
         }
     }
     static Vector3 Average(ObjVector3 a, ObjVector3 b, ObjVector3 c) {
