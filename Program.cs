@@ -37,9 +37,11 @@ class Window : GameWindow {
     Object3D blueRock;
     Object3D broom;
     Object3D arena;
-    Rock[] rocks = new Rock[16];
+    Object3D cube;
 
-    float[] icePositions = {0, -4.5};
+    Rock[] rocks = new Rock[16];
+    float[] icePositions = {0, -4.5f, 4.5f + 3.27f, 4.5f + 4.5f + 3.27f};
+
     ObjectUI[] objectUIs = new ObjectUI[2];
     double t = 0;
 
@@ -74,6 +76,7 @@ class Window : GameWindow {
         ice = new Object3D("models/ice.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
         broom = new Object3D("models/broom.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
         arena = new Object3D("models/Arena.obj", "shaders/shader-smooth.vert", "shaders/shader-smooth.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+        cube = new Object3D("models/cube.obj", "shaders/shader-vertex.vert", "shaders/shader-vertex.frag", new Vector3(0, 10, 0), new Vector3(0, 0, 0));
         objectUIs[0] = new ObjectUI("models/title.obj", new Vector3(0.5f, 0, 0), new Vector3(0.5f, 0.5f, 0), new Vector3(0, 0, 0), new Vector3(0.5f, 0.5f, 0.5f));
         objectUIs[1] = new ObjectUI("models/space.obj", new Vector3(0, 0, 0.5f), new Vector3(0.5f, 0, 0), new Vector3(0, 0, 0), new Vector3(0.25f, 0.25f, 0.25f));
     }
@@ -81,14 +84,14 @@ class Window : GameWindow {
     protected override void OnRenderFrame(FrameEventArgs e) {
         base.OnRenderFrame(e);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-        ice.position.Z = 0;
-        ice.updateMatrix();
-        ice.render(camera);
-        ice.position.Z = -4.5f;
-        ice.updateMatrix();
-        ice.render(camera);
+        for (int i = 0; i < icePositions.Length; i++) {
+            ice.position.Z = icePositions[i];
+            ice.updateMatrix();
+            ice.render(camera);
+        }
         arena.render(camera);
         broom.render(camera);
+        cube.render(camera);
         if (phase == "title") {
             redRock.render(camera);
             blueRock.render(camera);
@@ -306,7 +309,8 @@ class Window : GameWindow {
         t += e.Time;
         blueRock.dir = t;
         redRock.dir = t;
-        arena.dir = t;
+        cube.rotation = new Vector3((float)t, (float)t, 0);
+        cube.updateMatrix();
     }
 
     protected override void OnResize(ResizeEventArgs e) {

@@ -78,12 +78,6 @@ class Object3D {
                 }
             }
 
-            if (objFilePath == "models/cube.obj") {
-                for (int j = 0; j < 6; j++) {
-                    Console.WriteLine(vertices[j*6] + " " + vertices[j*6+1] + " " + vertices[j*6+2] + " " + vertices[j*6+3] + " " + vertices[j*6+4] + " " + vertices[j*6+5]);
-                }
-            }
-
             vertexArrayObjects[i] = GL.GenVertexArray();
             GL.BindVertexArray(vertexArrayObjects[i]);
             int vertexBufferObject = GL.GenBuffer();
