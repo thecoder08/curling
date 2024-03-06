@@ -36,8 +36,10 @@ class Window : GameWindow {
     Object3D redRock;
     Object3D blueRock;
     Object3D broom;
+    Object3D arena;
     Rock[] rocks = new Rock[16];
 
+    float[] icePositions = {0, -4.5};
     ObjectUI[] objectUIs = new ObjectUI[2];
     double t = 0;
 
@@ -50,27 +52,28 @@ class Window : GameWindow {
 
     public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) {
         camera = new Camera(new Vector3(0, 3, 0), new Vector3(0, 0, 0), (float)Size.X / Size.Y, 1.04f, 0.01f, 1000);
-        rocks[0] = new Rock(new Vector3(16.5f, 0.06f, 0), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, true);
-        rocks[8] = new Rock(new Vector3(-20, 0.06f, 0.1f), new Vector3(0, 0, 0), new Vector3(5, 0, 0), 1, false);
+        rocks[0] = new Rock(new Vector3(16.5f, 0, 0), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, true);
+        rocks[8] = new Rock(new Vector3(-20, 0, 0.1f), new Vector3(0, 0, 0), new Vector3(5, 0, 0), 1, false);
         for (int i = 1; i < 8; i++) {
-            rocks[i] = new Rock(new Vector3(0.4f * (i/2) + 21, 0.06f, -1.5f - 0.4f * (i%2)), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, true);
+            rocks[i] = new Rock(new Vector3(0.4f * (i/2) + 21, 0, -1.5f - 0.4f * (i%2)), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, true);
         }
         for (int i = 1; i < 8; i++) {
-            rocks[i + 8] = new Rock(new Vector3(0.4f * (i/2) + 21, 0.06f, 0.4f * (i%2) + 1.5f), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, false);
+            rocks[i + 8] = new Rock(new Vector3(0.4f * (i/2) + 21, 0, 0.4f * (i%2) + 1.5f), new Vector3(0, 0, 0), new Vector3(0, 0, 0), 1, false);
         }
     }
 
     protected override void OnLoad() {
         base.OnLoad();
 
-        GL.ClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+        GL.ClearColor(0.5f, 0.7f, 1f, 1.0f);
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.Multisample);
 
-        redRock = new Object3D("models/rock-austin.obj", "shaders/shader-smooth.vert", "shaders/shader-smooth.frag", new Vector3(0, 0.05f, 0), new Vector3(0, 0, 0));
-        blueRock = new Object3D("models/rock-blue.obj", "shaders/shader-smooth.vert", "shaders/shader-smooth.frag", new Vector3(0, 0.05f, 0), new Vector3(0, 0, 0));
-        ice = new Object3D("models/ice.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0)); 
+        redRock = new Object3D("models/rock-austin.obj", "shaders/shader-smooth.vert", "shaders/shader-smooth.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+        blueRock = new Object3D("models/rock-blue.obj", "shaders/shader-smooth.vert", "shaders/shader-smooth.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+        ice = new Object3D("models/ice.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
         broom = new Object3D("models/broom.obj", "shaders/shader.vert", "shaders/shader.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+        arena = new Object3D("models/Arena.obj", "shaders/shader-smooth.vert", "shaders/shader-smooth.frag", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
         objectUIs[0] = new ObjectUI("models/title.obj", new Vector3(0.5f, 0, 0), new Vector3(0.5f, 0.5f, 0), new Vector3(0, 0, 0), new Vector3(0.5f, 0.5f, 0.5f));
         objectUIs[1] = new ObjectUI("models/space.obj", new Vector3(0, 0, 0.5f), new Vector3(0.5f, 0, 0), new Vector3(0, 0, 0), new Vector3(0.25f, 0.25f, 0.25f));
     }
@@ -78,7 +81,13 @@ class Window : GameWindow {
     protected override void OnRenderFrame(FrameEventArgs e) {
         base.OnRenderFrame(e);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        ice.position.Z = 0;
+        ice.updateMatrix();
         ice.render(camera);
+        ice.position.Z = -4.5f;
+        ice.updateMatrix();
+        ice.render(camera);
+        arena.render(camera);
         broom.render(camera);
         if (phase == "title") {
             redRock.render(camera);
@@ -297,6 +306,7 @@ class Window : GameWindow {
         t += e.Time;
         blueRock.dir = t;
         redRock.dir = t;
+        arena.dir = t;
     }
 
     protected override void OnResize(ResizeEventArgs e) {
