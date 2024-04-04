@@ -71,8 +71,6 @@ class Window : GameWindow {
     }
 
     protected override void OnLoad() {
-        base.OnLoad();
-
         GL.ClearColor(0.5f, 0.7f, 1.0f, 1.0f);
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.Multisample);
@@ -88,7 +86,6 @@ class Window : GameWindow {
     }
 
     protected override void OnRenderFrame(FrameEventArgs e) {
-        base.OnRenderFrame(e);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         for (int i = 0; i < icePositions.Length; i++) {
             ice.position.Z = icePositions[i];
@@ -125,8 +122,6 @@ class Window : GameWindow {
     }
 
     protected override void OnUpdateFrame(FrameEventArgs e) {
-        base.OnUpdateFrame(e);
-
         if (phase == "freecam") {
             if (KeyboardState.IsKeyDown(Keys.W)) {
                 camera.position.X -= speed * (float)e.Time * (float)Math.Sin(camera.rotation.Y);
@@ -337,7 +332,6 @@ class Window : GameWindow {
     }
 
     protected override void OnResize(ResizeEventArgs e) {
-        base.OnResize(e);
         camera.aspectRatio = (float)Size.X / Size.Y;
         camera.updateMatrix();
         if (phase == "title") {
