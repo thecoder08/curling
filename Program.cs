@@ -73,7 +73,7 @@ class Window : GameWindow {
     protected override void OnLoad() {
         base.OnLoad();
 
-        GL.ClearColor(0.5f, 0.7f, 1f, 1.0f);
+        GL.ClearColor(0.5f, 0.7f, 1.0f, 1.0f);
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.Multisample);
 
@@ -259,6 +259,10 @@ class Window : GameWindow {
                 }
             }
             if (allRocksStopped) {
+                if (currentRock == 15) {
+                    Console.WriteLine("All done");
+                    Environment.Exit(0);
+                }
                 phase = "broom";
                 camera.position = new Vector3(20f, 1, 0);
                 camera.rotation = new Vector3(0, (float)Math.PI/2, 0);
@@ -304,7 +308,7 @@ class Window : GameWindow {
                 if (rocks[i].rotationSpeed < 0) {
                     rocks[i].rotationSpeed += rocks[i].drag * 0.1f * (float)e.Time;
                 }
-                rocks[i].velocity.Z -= rocks[i].rotationSpeed * 0.05f * (float)e.Time;
+                rocks[i].velocity.Z -= rocks[i].rotationSpeed * 0.03f * (float)e.Time;
 
                 for (int j = 0; j < rocks.Length; j++) {
                     if (i == j) {
